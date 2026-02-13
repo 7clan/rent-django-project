@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# SQLite database
+db.sqlite3
+
+# Environment
+.env
+
+# VS Code
+.vscode/
+
+# Docker
+*.log
+docker-compose.override.yml

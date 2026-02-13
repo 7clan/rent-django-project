@@ -1,0 +1,42 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'process/style.css' %}">
+<script src="{% static 'process/login.js' %}"></script>
+{% block content %}
+<h2>All Floors</h2>
+<ul>
+    {% for floor in all_floors %}
+        <li>Floor {{ floor.number }}</li>
+        <ul>
+            {% for apartment in floor.apartments.all %}
+                <li>Apartment {{ apartment.id }} - ${{ apartment.price }} - Renter: <a href="{{ apartment.renter.get_absolute_url }}">{{ apartment.renter.name }}</a></li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+</ul>
+
+<h2>Add New Floor</h2>
+<form action="{% url 'floor-page' %}" method="post">
+    
+    {{ floor_form.as_p }}
+    <input type="hidden" name="ac" value="add_floor">
+    <button type="submit">Add Floor</button>
+
+</form>
+<h2>Add New Apartment</h2>
+<form action="{% url 'floor-page' %}" method="post">
+    
+    {{ apartment_form.as_p }}
+    <input type="hidden" name="ac" value="add_apartment">
+    <button type="submit">Add Apartment</button>
+
+</form>
+<h2>Add New Renter</h2>
+<form action="{% url 'floor-page' %}" method="post">
+    
+    {{ renter_form.as_p }}
+    <input type="hidden" name="ac" value="add_renter">
+    <button type="submit">Add Renter</button>
+
+</form>
+
+{% endblock %}
