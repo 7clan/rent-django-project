@@ -22,7 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
-ALLOWED_HOSTS = ["rent-django-project.onrender.com",]
+# Use environment variable if set, otherwise fallback to localhost
+ALLOWED_HOSTS = [
+    os.environ.get("DJANGO_ALLOWED_HOST", "localhost"),
+    "127.0.0.1"
+]
+
 
 
 # Application definition
