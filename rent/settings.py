@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
-ALLOWED_HOSTS = ["rent-django-project.onrender.com"]
+ALLOWED_HOSTS = ["rent-django-project.onrender.com",]
 
 
 # Application definition
