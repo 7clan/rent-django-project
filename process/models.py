@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from datetime import date
 from dateutil.relativedelta import relativedelta
+from decimal import Decimal
 from django.urls import reverse
 
 class Floor(models.Model):
@@ -15,11 +16,12 @@ class Floor(models.Model):
 
 class Apartment(models.Model):
     id = models.AutoField(primary_key=True)
-    floor = models.ForeignKey(Floor, related_name="apartments", on_delete=models.CASCADE, null=True)
+    floor = models.ForeignKey(Floor, related_name="apartments", on_delete=models.CASCADE, null=True, blank=True)
    
 
     def __str__(self):
-        return f"Apartment {self.id} on Floor {self.floor.number}"
+        floor_num = self.floor.number if self.floor else "(no floor)"
+        return f"Apartment {self.id} on Floor {floor_num}"
 
     class Meta:
         verbose_name = "Apartment"
@@ -40,8 +42,8 @@ class Renter(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField()
     phone = models.CharField(max_length=15)
-    apartment = models.OneToOneField(Apartment, on_delete=models.CASCADE)
-    floor = models.ForeignKey(Floor, on_delete=models.CASCADE)
+    apartment = models.OneToOneField(Apartment, on_delete=models.CASCADE, blank=True, null=True)
+    floor = models.ForeignKey(Floor, on_delete=models.CASCADE, blank=True, null=True)
     start_date = models.DateField(default=timezone.now)
 
     def __str__(self):
@@ -54,23 +56,34 @@ class Renter(models.Model):
 
     def expected_payments(self):
         """Expected payments per month based on yearly rents of the apartment."""
-        total = 0
+        total = Decimal('0.00')
         today = date.today().replace(day=1)
         current = self.start_date.replace(day=1)
 
         while current <= today:
             try:
                 year_rent = self.apartment.yearly_rents.get(year=current.year)
-                monthly_rent = year_rent.price / 12
+                # YearlyRent.price represents monthly payment for that year (Decimal)
+                monthly_rent = year_rent.price
                 total += monthly_rent
             except YearlyRent.DoesNotExist:
-                total += 0
+                total += Decimal('0.00')
             current += relativedelta(months=1)
 
         return total
 
     def total_paid(self):
-        return sum(p.amount for p in self.payments.all())
+        # ensure Decimal total
+        total = Decimal('0.00')
+        for p in self.payments.all():
+            amt = p.amount if p.amount is not None else Decimal('0.00')
+            if not isinstance(amt, Decimal):
+                try:
+                    amt = Decimal(str(amt))
+                except Exception:
+                    amt = Decimal('0.00')
+            total += amt
+        return total
 
     def balance(self):
         """Positive = overpaid, Negative = owes money"""
@@ -110,7 +123,8 @@ class Renter(models.Model):
         """Returns a list of tuples: (month, paid: True/False) for display purposes"""
         paid_months = set()
         for p in self.payments.all():
-            start = p.date_paid.replace(day=1)
+            # prefer explicit month_covered if set, otherwise use the date paid
+            start = (p.month_covered or p.date_paid).replace(day=1)
             if p.payment_type == "monthly":
                 paid_months.add(start.strftime("%Y-%m"))
             elif p.payment_type == "yearly":

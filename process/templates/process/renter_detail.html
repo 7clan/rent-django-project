@@ -1,7 +1,5 @@
+{% extends "base.html" %}
 {% load static %}
-<link rel="stylesheet" href="{% static 'process/renter.css' %}">
-<script src="{% static 'process/login.js' %}"></script>
-
 
 {% block content %}
 <h1>Renter Details</h1>
@@ -11,9 +9,11 @@
     <tr><td>Renter</td><td>{{ renter.name }}</td></tr>
     <tr><td>Floor</td><td>{{ renter.floor.number }}</td></tr>
     <tr><td>Apartment</td><td>{{ renter.apartment }}</td></tr>
-    <tr><td>Total Paid</td><td>{{ renter.total_paid }}</td></tr>
-    <tr><td>Expected Payments</td><td>{{ renter.expected_payments }}</td></tr>
-    <tr><td>Balance</td><td>{{ renter.balance }}</td></tr>
+    
+    <tr><td>Total Paid</td><td id="total_paid">${{ renter.total_paid }}</td></tr>
+    <tr><td>Expected Payments (to date)</td><td id="expected_total">${{ renter.expected_payments }}</td></tr>
+    <tr><td>Expected Unpaid</td><td id="expected_unpaid">${{ expected_unpaid }}</td></tr>
+    <tr><td>Balance</td><td id="balance">${{ renter.balance }}</td></tr>
 </table>
 
 <h2>Monthly Payment Status</h2>
@@ -38,16 +38,78 @@
     </tbody>
 </table>
 
-
-
-<form action="{% url 'add_payment' renter.id %}" method="post">
-    
+<h2>Add Payment</h2>
+<form id="payment_form" class="manual-form" action="{% url 'add_payment' renter.id %}" method="post">
+    {% csrf_token %}
     <label for="amount">Payment Amount:</label>
-    <input type="number" id="amount" name="amount" required>
-    <button type="submit">Add Payment</button>
-    <label for="month_covered">Month Covered:</label>
- <label for="month_covered">Month Covered:</label>
-<input type="month" id="year_month_covered" name="year_month_covered" required>
+    <input type="number" id="amount" name="amount" step="0.01" required placeholder="Enter amount">
+    
+    <label for="payment_type">Type:</label>
+    <select id="payment_type" name="payment_type">
+        <option value="monthly">Monthly</option>
+        <option value="yearly">Yearly</option>
+    </select>
 
+    <div id="monthly_block">
+        <label for="year_month_covered">Month Covered:</label>
+        <input type="month" id="year_month_covered" name="year_month_covered">
+    </div>
+
+    <div id="yearly_block" style="display:none;">
+        <label for="year_covered">Year Covered:</label>
+        <input type="number" id="year_covered" name="year_covered" min="1900" max="2100" placeholder="e.g. 2022">
+    </div>
+    
+    <button type="submit">Add Payment</button>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const typeSel = document.getElementById('payment_type');
+    const monthlyBlock = document.getElementById('monthly_block');
+    const yearlyBlock = document.getElementById('yearly_block');
+    typeSel.addEventListener('change', () => {
+        if (typeSel.value === 'yearly') {
+            monthlyBlock.style.display = 'none';
+            yearlyBlock.style.display = '';
+            document.getElementById('year_month_covered').required = false;
+            document.getElementById('year_covered').required = true;
+        } else {
+            monthlyBlock.style.display = '';
+            yearlyBlock.style.display = 'none';
+            document.getElementById('year_month_covered').required = true;
+            document.getElementById('year_covered').required = false;
+        }
+    });
+});
+</script>
+
+<h2>Yearly Rent (monthly amount) for this Apartment</h2>
+<form class="manual-form" action="{% url 'add_yearly_rent' renter.id %}" method="post">
+    {% csrf_token %}
+    <label for="year_input">Year:</label>
+    <input type="number" id="year_input" name="year" required placeholder="e.g. 2022">
+
+    <label for="monthly_price">Monthly Amount ($):</label>
+    <input type="number" id="monthly_price" name="monthly_price" step="0.01" required placeholder="e.g. 200">
+
+    <button type="submit">Add / Update Yearly Rent</button>
+</form>
+
+{% if renter.apartment %}
+<h3>Configured Yearly Rents</h3>
+<table>
+    <thead><tr><th>Year</th><th>Monthly Amount</th></tr></thead>
+    <tbody>
+    {% for yr in renter.apartment.yearly_rents.all %}
+        <tr><td>{{ yr.year }}</td><td>${{ yr.price }}</td></tr>
+    {% empty %}
+        <tr><td colspan="2">No yearly rents configured.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<script src="{% static 'process/login.js' %}"></script>
+<script src="{% static 'process/payment.js' %}"></script>
 {% endblock %}

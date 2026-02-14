@@ -29,9 +29,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // HANDLE ALL FORMS WITH JWT
+    // HANDLE ALL FORMS WITH JWT (skip forms handled manually)
     const token = localStorage.getItem("jwt_token");
     document.querySelectorAll("form").forEach(form => {
+        if (form.classList && form.classList.contains('manual-form')) return; // skip manual forms
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
 
@@ -58,11 +59,27 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
 
-                const result = await res.json();
-                if (result.success) {
+                // Safely parse JSON; if response is HTML or non-JSON, show text to user
+                let result = null;
+                const ct = res.headers.get('content-type') || '';
+                if (ct.includes('application/json')) {
+                    try {
+                        result = await res.json();
+                    } catch (err) {
+                        const txt = await res.text();
+                        alert('Error submitting form: ' + txt);
+                        return;
+                    }
+                } else {
+                    const txt = await res.text();
+                    alert('Error submitting form: ' + txt);
+                    return;
+                }
+
+                if (result && result.success) {
                     window.location.reload();
                 } else {
-                    alert("Error: " + JSON.stringify(result.error));
+                    alert("Error: " + JSON.stringify(result ? result.error : 'Unknown error'));
                 }
 
             } catch (err) {

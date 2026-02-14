@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rent Management System</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rent Management</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'process/style.css' %}">
 </head>
@@ -11,5 +11,6 @@
     <div class="container">
         {% block content %}{% endblock %}
     </div>
+    <script src="{% static 'process/login.js' %}"></script>
 </body>
 </html>
