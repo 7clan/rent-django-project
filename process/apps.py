@@ -1,4 +1,4 @@
-
+# process/apps.py
 from django.apps import AppConfig
 
 class ProcessConfig(AppConfig):
@@ -6,6 +6,7 @@ class ProcessConfig(AppConfig):
     name = 'process'
 
     def ready(self):
-        # This runs when Django starts
-        from rent.utils import create_superuser
-        create_superuser()
+        # Remove this:
+        # from rent.utils import create_superuser
+        # create_superuser()
+        import process.signals  # <-- optional, if you use signals
