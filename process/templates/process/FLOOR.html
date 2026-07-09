@@ -1,0 +1,64 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'process/style.css' %}">
+<script src="{% static 'process/login.js' %}"></script>
+{% block content %}
+<h2>All Floors</h2>
+<ul>
+    {% for floor in all_floors %}
+        <li>{{ floor }}</li>
+        <ul>
+            {% for apartment in floor.apartments.all %}
+                <li>
+                    {{ apartment }}
+                    {% if apartment.current_renter %}
+                        - Current renter: <a href="{{ apartment.current_renter.get_absolute_url }}">{{ apartment.current_renter.name }}</a>
+                    {% else %}
+                        - Available
+                    {% endif %}
+                    <ul>
+                        {% for yearly_rent in apartment.yearly_rents.all %}
+                            <li>{{ yearly_rent.year }} yearly rent: ${{ yearly_rent.price }}</li>
+                        {% empty %}
+                            <li>No yearly rent set yet</li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+</ul>
+
+<h2>Add Floor</h2>
+<form action="{% url 'floor-page' %}" method="post">
+    
+    {{ floor_form.as_p }}
+    <input type="hidden" name="ac" value="add_floor">
+    <button type="submit">Add Floor</button>
+
+</form>
+<h2>Add Apartment</h2>
+<form action="{% url 'floor-page' %}" method="post">
+    
+    {{ apartment_form.as_p }}
+    <input type="hidden" name="ac" value="add_apartment">
+    <button type="submit">Add Apartment</button>
+
+</form>
+<h2>Add Renter</h2>
+<form action="{% url 'floor-page' %}" method="post">
+    
+    {{ renter_form.as_p }}
+    <input type="hidden" name="ac" value="add_renter">
+    <button type="submit">Add Renter</button>
+
+</form>
+<h2>Add Yearly Rent</h2>
+<form action="{% url 'floor-page' %}" method="post">
+
+    {{ yearly_rent_form.as_p }}
+    <input type="hidden" name="ac" value="add_yearly_rent">
+    <button type="submit">Add Yearly Rent</button>
+
+</form>
+
+{% endblock %}
