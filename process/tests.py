@@ -158,6 +158,47 @@ class RenterPaymentStatusTests(TestCase):
         self.assertEqual(status["status_type"], "not_due")
         self.assertEqual(status["expected_amount"], 0)
 
+    def test_expected_payments_matches_visible_due_months(self):
+        current_year = date.today().year
+        floor = Floor.objects.create(number=10)
+        apartment = Apartment.objects.create(floor=floor)
+        YearlyRent.objects.create(apartment=apartment, year=current_year, price="1200.00")
+        renter = Renter.objects.create(
+            name="Year Balance Renter",
+            email="",
+            phone="70000010",
+            apartment=apartment,
+            floor=floor,
+            start_date=date(current_year, 3, 15),
+        )
+
+        self.assertEqual(renter.expected_payments(), 1000)
+
+    def test_balance_uses_expected_visible_due_months(self):
+        current_year = date.today().year
+        floor = Floor.objects.create(number=11)
+        apartment = Apartment.objects.create(floor=floor)
+        YearlyRent.objects.create(apartment=apartment, year=current_year, price="1200.00")
+        renter = Renter.objects.create(
+            name="Balance Renter",
+            email="",
+            phone="70000011",
+            apartment=apartment,
+            floor=floor,
+            start_date=date(current_year, 3, 15),
+        )
+        Payment.objects.create(
+            renter=renter,
+            amount="300.00",
+            date_paid=date(current_year, 3, 20),
+            payment_type="monthly",
+            month_covered=date(current_year, 3, 1),
+        )
+
+        self.assertEqual(renter.total_paid(), 300)
+        self.assertEqual(renter.expected_payments(), 1000)
+        self.assertEqual(renter.balance(), -700)
+
 
 class RenterOccupancyTests(TestCase):
     def test_apartment_can_only_have_one_active_renter(self):

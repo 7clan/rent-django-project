@@ -99,21 +99,7 @@ class Renter(models.Model):
 
     def expected_payments(self):
         """Expected payments per month based on yearly rents of the apartment."""
-        total = 0
-        end_date = self.move_out_date or date.today()
-        today = end_date.replace(day=1)
-        current = self.start_date.replace(day=1)
-
-        while current <= today:
-            try:
-                year_rent = self.apartment.yearly_rents.get(year=current.year)
-                monthly_rent = year_rent.price / 12
-                total += monthly_rent
-            except YearlyRent.DoesNotExist:
-                total += 0
-            current += relativedelta(months=1)
-
-        return total
+        return sum(item["expected_amount"] for item in self.payment_status_by_month())
 
     def total_paid(self):
         return sum(p.amount for p in self.payments.all())
@@ -168,7 +154,7 @@ class Renter(models.Model):
         status = []
         current = self.start_date.replace(day=1)
         end_date = self.move_out_date or date.today()
-        today = end_date.replace(day=1)
+        today = end_date.replace(month=12, day=1)
 
         while current <= today:
             ym = current.strftime("%Y-%m")
@@ -260,7 +246,7 @@ class Renter(models.Model):
         if first_payment_month and first_payment_month < current:
             current = first_payment_month.replace(month=1, day=1)
         end_date = self.move_out_date or date.today()
-        today = end_date.replace(day=1)
+        today = end_date.replace(month=12, day=1)
 
         while current <= today:
             status.append(self.payment_status_for_month(current, paid_totals))
