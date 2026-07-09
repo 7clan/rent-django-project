@@ -15,8 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the project files
 COPY . /app/
 
-# Expose port 8000 (Django default)
+# Expose port 8000 for local Docker runs. Render provides PORT at runtime.
 EXPOSE 8000
 
-# Run Django server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Run migrations, collect static files, then start Gunicorn.
+CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn rent.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]

@@ -18,7 +18,7 @@ The app helps the owner keep notes on renters, apartments, yearly rent amounts, 
 - Show how much was paid, how much was due, and how much is still left.
 - Treat months before a renter's start month as not due.
 - Provide a Django REST Framework API for the rental data.
-- Use PostgreSQL with the pgvector extension.
+- Use SQLite for simple local and Render deployment.
 
 ## Tech Stack
 
@@ -26,17 +26,11 @@ The app helps the owner keep notes on renters, apartments, yearly rent amounts, 
 - Django
 - Django REST Framework
 - SimpleJWT
-- PostgreSQL
-- pgvector
-- Docker Compose
+- SQLite
+- Gunicorn
+- WhiteNoise
 
 ## Local Setup
-
-Start the PostgreSQL/pgvector database:
-
-```powershell
-docker compose up -d db
-```
 
 Install dependencies:
 
@@ -85,19 +79,21 @@ JWT token endpoints:
 
 ## Database
 
-This project uses PostgreSQL with pgvector instead of SQLite.
+This project uses SQLite.
 
-Default local database settings:
+By default Django stores data in:
 
 ```text
-database: rent_api
-user: rent_api
-password: rent_api
-host: localhost
-port: 5432
+db.sqlite3
 ```
 
-Inside Docker, Django connects to the database host named `db`.
+On Render, SQLite is simplest, but data can reset on redeploy unless you attach a persistent disk.
+
+To use a persistent disk on Render, set:
+
+```text
+SQLITE_NAME=/var/data/db.sqlite3
+```
 
 ## Notes
 
