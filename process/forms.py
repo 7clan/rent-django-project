@@ -4,6 +4,15 @@ from .models import Apartment, Renter, Payment, YearlyRent
 from django import forms
 from django.forms import ModelForm
 
+
+class ApartmentWithRenterChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, apartment):
+        current_renter = apartment.current_renter
+        if current_renter:
+            return f"{apartment} - Current renter: {current_renter.name}"
+        return f"{apartment} - Available"
+
+
 class RenterForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -60,6 +69,8 @@ class ApartmentForm(ModelForm):
         }
 
 class YearlyRentForm(ModelForm):
+    apartment = ApartmentWithRenterChoiceField(queryset=Apartment.objects.all())
+
     class Meta:
         model = YearlyRent
         fields = '__all__'

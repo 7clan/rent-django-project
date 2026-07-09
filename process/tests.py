@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from .models import Apartment, Floor, Payment, Renter, YearlyRent
-from .forms import RenterForm
+from .forms import RenterForm, YearlyRentForm
 
 
 class RenterPaymentStatusTests(TestCase):
@@ -267,3 +267,24 @@ class RenterOccupancyTests(TestCase):
         self.assertFalse(form.fields["email"].required)
         self.assertNotIn(occupied, form.fields["apartment"].queryset)
         self.assertIn(available, form.fields["apartment"].queryset)
+
+    def test_yearly_rent_form_shows_current_renter_in_apartment_choices(self):
+        floor = Floor.objects.create(number=12)
+        occupied = Apartment.objects.create(name="A12", floor=floor)
+        available = Apartment.objects.create(name="A13", floor=floor)
+        Renter.objects.create(
+            name="Mohammad Farhat",
+            email="",
+            phone="70000012",
+            apartment=occupied,
+            floor=floor,
+            start_date=date(2026, 1, 1),
+        )
+
+        form = YearlyRentForm()
+        occupied_label = form.fields["apartment"].label_from_instance(occupied)
+        available_label = form.fields["apartment"].label_from_instance(available)
+
+        self.assertIn("Mohammad Farhat", occupied_label)
+        self.assertIn("Current renter", occupied_label)
+        self.assertIn("Available", available_label)
