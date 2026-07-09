@@ -118,6 +118,46 @@ class RenterPaymentStatusTests(TestCase):
         self.assertEqual(statuses["2026-03"]["status_label"], "UNPAID")
         self.assertEqual(statuses["2026-03"]["expected_amount"], 100)
 
+    def test_active_future_months_are_not_marked_done(self):
+        floor = Floor.objects.create(number=8)
+        apartment = Apartment.objects.create(floor=floor)
+        YearlyRent.objects.create(apartment=apartment, year=2099, price="1200.00")
+        renter = Renter.objects.create(
+            name="Future Renter",
+            email="",
+            phone="70000008",
+            apartment=apartment,
+            floor=floor,
+            start_date=date(2099, 1, 1),
+        )
+
+        status = renter.payment_status_for_month(date(2099, 8, 1))
+
+        self.assertEqual(status["status_label"], "UNPAID")
+        self.assertEqual(status["status_type"], "unpaid")
+        self.assertFalse(status["is_paid"])
+        self.assertEqual(status["expected_amount"], 100)
+
+    def test_months_after_move_out_are_not_due(self):
+        floor = Floor.objects.create(number=9)
+        apartment = Apartment.objects.create(floor=floor)
+        YearlyRent.objects.create(apartment=apartment, year=2026, price="1200.00")
+        renter = Renter.objects.create(
+            name="Moved Renter",
+            email="",
+            phone="70000009",
+            apartment=apartment,
+            floor=floor,
+            start_date=date(2026, 1, 1),
+            move_out_date=date(2026, 7, 1),
+        )
+
+        status = renter.payment_status_for_month(date(2026, 8, 1))
+
+        self.assertEqual(status["status_label"], "DONE")
+        self.assertEqual(status["status_type"], "not_due")
+        self.assertEqual(status["expected_amount"], 0)
+
 
 class RenterOccupancyTests(TestCase):
     def test_apartment_can_only_have_one_active_renter(self):

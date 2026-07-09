@@ -214,8 +214,7 @@ class Renter(models.Model):
         month_key = month_date.strftime("%Y-%m")
         paid_amount = paid_totals.get(month_key, Decimal("0.00"))
         start_month = self.start_date.replace(day=1)
-        end_date = self.move_out_date or date.today()
-        end_month = end_date.replace(day=1)
+        move_out_month = self.move_out_date.replace(day=1) if self.move_out_date else None
 
         if month_date < start_month:
             return {
@@ -228,7 +227,7 @@ class Renter(models.Model):
                 "status_type": "not_due",
             }
 
-        if month_date > end_month:
+        if move_out_month and month_date > move_out_month:
             return {
                 "month": month_key,
                 "expected_amount": Decimal("0.00"),
